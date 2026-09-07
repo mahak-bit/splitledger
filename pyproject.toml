@@ -1,0 +1,122 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "splitledger"
+version = "0.1.0"
+description = "Expense-sharing and debt-settlement API built with FastAPI and SQLAlchemy 2.0"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mahak Jain", email = "mahakj532@gmail.com" }]
+keywords = ["fastapi", "sqlalchemy", "expense-sharing", "graph-algorithms", "rest-api"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0.30",
+    "alembic>=1.13",
+    "aiosqlite>=0.20",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "pyjwt>=2.8",
+    "argon2-cffi>=23.1",
+    "python-multipart>=0.0.9",
+    "email-validator>=2.1",
+]
+
+[project.optional-dependencies]
+postgres = ["asyncpg>=0.29"]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/mahak-bit/splitledger"
+Issues = "https://github.com/mahak-bit/splitledger/issues"
+
+[project.scripts]
+splitledger = "splitledger.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/splitledger"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # pyflakes
+    "I",         # isort
+    "N",         # pep8-naming
+    "UP",        # pyupgrade
+    "B",         # bugbear
+    "C4",        # comprehensions
+    "SIM",       # simplify
+    "ARG",       # unused arguments
+    "PTH",       # use pathlib
+    "ASYNC",     # async correctness
+    "S",         # bandit security
+    "T20",       # no print()
+    "RUF",       # ruff-specific
+]
+ignore = [
+    "B008",  # FastAPI's Depends() in defaults is the documented idiom
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "S311", "ARG001"]
+"src/splitledger/cli.py" = ["T20"]
+"migrations/*" = ["I001", "ARG001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["splitledger"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+files = ["src", "tests"]
+plugins = []
+
+[[tool.mypy.overrides]]
+module = ["argon2.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+
+[tool.coverage.run]
+source = ["src/splitledger"]
+branch = true
+# SQLAlchemy runs async database work inside greenlets; without this, every line
+# executed under await session.execute(...) is reported as uncovered.
+concurrency = ["greenlet", "thread"]
+omit = ["src/splitledger/cli.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
